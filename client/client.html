@@ -28,5 +28,55 @@
   </section>
   <section id="content">
   </section>
+  <section id="content">
+    <div id="result"></div> 
+  </section>
+
+  <script>
+    // update the DOM 
+    const updateResponse = (data) => {
+      const resultDiv = document.querySelector('#result');
+      resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`; 
+    };
+
+    //errors
+    const handleError = (error) => {
+      console.error('Error:', error);
+      const resultDiv = document.querySelector('#result');
+      resultDiv.innerHTML = `<pre>Error: ${error.message}</pre>`; 
+    };
+
+    // "Send" button
+    document.querySelector('#send').addEventListener('click', async () => {
+      const endpoint = document.querySelector('#page').value; // Get endpoint
+      const acceptHeader = document.querySelector('#type').value; // Get response 
+
+      try {
+        const response = await fetch(endpoint, {
+          headers: {
+            'Accept': acceptHeader,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        if (acceptHeader === 'application/json') {
+          const data = await response.json(); // Parse JSON 
+          updateResponse(data);
+        } else if (acceptHeader === 'text/xml') {
+          const xmlText = await response.text(); // Parse XML
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+          const message = xmlDoc.querySelector('message').textContent;
+          const id = xmlDoc.querySelector('id')?.textContent || 'N/A'; 
+          updateResponse({ message, id }); 
+        }
+      } catch (error) {
+        handleError(error); 
+      }
+    });
+  </script>
 </body>
 </html>
